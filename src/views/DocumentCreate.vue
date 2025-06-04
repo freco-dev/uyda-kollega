@@ -97,10 +97,27 @@
   </div>
 
   <!-- Modal for success or error messages -->
-  <div v-if="showModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
+  <div v-if="showErrModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">{{ modalMessage }}</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
+        </div>
+        <div class="modal-body">
+          <p>{{ modalMessage }}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" @click="closeModal">{{ $t("close") }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-if="showSccModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
           <h5 class="modal-title">{{ modalMessage }}</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
@@ -148,7 +165,8 @@ export default {
     const cashRegister = ref('');
     const subsections = ref([]);
     const cashRegisters = ref([]);
-    const showModal = ref(false); // Modalni ko'rsatish uchun
+    const showErrModal = ref(false); // Modalni ko'rsatish uchun
+    const showSccModal = ref(false); // Modalni ko'rsatish uchun
     const modalMessage = ref(""); // Modal xabari
     const isReady = ref(false)
 
@@ -200,8 +218,8 @@ export default {
     };
 
     const fetchOperations = () => {
-      if (documentType.value === "Расход") {
-        operations.value = ["На расходы", "Поставщику"];
+      if (documentType.value === "Расход" ) {
+        operations.value = ["На расходы", "Поставщику", "Инвестиции"];
       } else {
         operations.value = [];
         actionTypes.value = [];
@@ -295,10 +313,10 @@ export default {
         });
 
         modalMessage.value = "Hujjat muvaffaqiyatli jo'natildi!";
-        showModal.value = true;
+        showSccModal.value = true;
       } catch (error) {
         modalMessage.value = "Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.";
-        showModal.value = true;
+        showErrModal.value = true;
         console.error("Xatolik yuz berdi: ", error);
       }
     };
@@ -308,7 +326,8 @@ export default {
     };
 
     const closeModal = () => {
-      showModal.value = false;
+      showErrModal.value = false;
+      showSccModal.value = false;
       router.push('/documents'); // Modal yopilganda hujjatlar sahifasiga qaytish
     };
 
@@ -386,7 +405,8 @@ export default {
       cashRegister,
       subsections,
       cashRegisters,
-      showModal,
+      showErrModal,
+      showSccModal,
       modalMessage,
       submitDocument,
       closeModal,

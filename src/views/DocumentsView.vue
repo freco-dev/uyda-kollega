@@ -130,7 +130,7 @@ export default {
         });
 
         if (response.data && response.data.Code === "200") {
-          documents.value = response.data.Message;
+          documents.value = response.data.message;
         } else {
           errorMessage.value = t("documentsNotFound");
         }
@@ -144,6 +144,7 @@ export default {
         } else {
           errorMessage.value = t("connectionError");
         }
+        console.log("Xatolik yuz berdi:", error);
       } finally {
         loading.value = false;
       }

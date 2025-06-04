@@ -10,6 +10,7 @@
 
       <!-- Profile Details -->
       <div class="card shadow-lg p-4">
+
         <h2 class="h6 text-uppercase text-muted">{{ t("organization") }}</h2>
         <p class="mb-3">{{ user.organization }}</p>
 
@@ -18,6 +19,9 @@
 
         <h2 class="h6 text-uppercase text-muted">{{ t("cashRegister") }}</h2>
         <p class="mb-3">{{ user.cashRegister }}</p>
+
+        <h2 class="h6 text-uppercase text-muted"><i class="bi bi-cash-coin"></i>  {{ t("balance") }}</h2>
+        <p class="mb-3">{{ formatNumber(user.cashRegisterBalance) }}</p>
       </div>
 
       <!-- Edit Button -->
@@ -49,10 +53,16 @@ export default {
       subsection: t("loading"),
       cashRegister: t("loading"),
       role: t("loading"),
+      cashRegisterBalance: t("loading"),
     });
 
     const profileImage = ref("../assets/pics/profile.png");
     const chatId = ref(null);
+
+    const formatNumber = (value) => {
+      if (!value || isNaN(value)) return value;
+      return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    };
 
     onMounted(async () => {
       try {
@@ -76,6 +86,7 @@ export default {
           subsection: data.subsection || t("unknown"),
           cashRegister: data.cashRegister || t("unknown"),
           role: data.role || t("unknown"),
+          cashRegisterBalance: data.cashRegisterBalance || t("unknown"),
         };
       } catch (error) {
         console.error("API orqali ma'lumotlarni olishda xatolik:", error);
@@ -94,6 +105,7 @@ export default {
       user,
       profileImage,
       t,
+      formatNumber
     };
   },
 };

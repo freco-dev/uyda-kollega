@@ -57,4 +57,5 @@ export default {
   profileTitle: "Фойдаланувчи профили",
   edit: "Таҳрирлаш",
   unknown: "Номаълум",
+  balance: "Баланс",
 };

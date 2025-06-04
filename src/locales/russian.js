@@ -57,4 +57,5 @@ export default {
   profileTitle: "Профиль пользователя",
   edit: "Редактировать",
   unknown: "Неизвестно",
+  balance: "Баланс",
 };
