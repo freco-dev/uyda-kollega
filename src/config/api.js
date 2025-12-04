@@ -1,3 +1,3 @@
-const apiLink = "https://b6b048e199dd.ngrok-free.app/api/Golddishes/hs/kollega";
+const apiLink = "https://6539527d4603.ngrok-free.app/api/Golddishes/hs/kollega";
 
 export default apiLink;
