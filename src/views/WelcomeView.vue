@@ -24,20 +24,6 @@
         {{ errorMessage }}
       </div>
 
-      <!-- Biometric xatolik -->
-      <div v-if="biometricError" class="alert alert-warning mb-3">
-        {{ t("biometricError") || "Biometric autentifikatsiya ishlamadi" }}
-      </div>
-
-      <!-- Biometric qayta urinish tugmasi -->
-      <button
-        v-if="biometricError && !loading"
-        @click="retryBiometry"
-        class="btn btn-warning btn px-4 me-2"
-      >
-        {{ t("retryBiometric") || "Qayta urinish" }}
-      </button>
-
       <!-- Boshlash tugmasi -->
       <router-link
         v-if="showStartButton"
@@ -56,7 +42,6 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import apiLink from "@/config/api";
-import { biometry } from '@tma.js/sdk-vue'
 
 export default {
   name: "WelcomeView",
@@ -68,30 +53,6 @@ export default {
     const loading = ref(true);
     const errorMessage = ref("");
     const showStartButton = ref(false);
-    const biometricError = ref(false);
-
-    const attemptBiometry = async () => {
-      try {
-        const { status, token } = await biometry.authenticate({
-          reason: 'Shaxsingizni tasdiqlang',
-        });
-        if (status === 'authorized') {
-          biometricError.value = false;
-          router.push("/documents");
-        } else {
-          biometricError.value = true;
-        }
-      } catch (error) {
-        console.error("Biometry xatolik:", error);
-        biometricError.value = true;
-      }
-    };
-
-    const retryBiometry = async () => {
-      loading.value = true;
-      await attemptBiometry();
-      loading.value = false;
-    };
 
     const checkUser = async () => {
       try {
@@ -102,7 +63,7 @@ export default {
 
         if (response.status === 200) {
           if (response.data.data.checked === true || response.data.data.checked === "true") {
-            await attemptBiometry();
+            router.push("/documents");
           } else if (response.data.data.checked === false || response.data.data.checked === "false") {
             router.push("/sent");
           } else {
@@ -151,7 +112,7 @@ export default {
       };
     };
 
-    return { firstName, loading, errorMessage, showStartButton, biometricError, retryBiometry, t };
+    return { firstName, loading, errorMessage, showStartButton, t };
   },
 };
 </script>
