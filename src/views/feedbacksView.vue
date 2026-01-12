@@ -88,7 +88,7 @@ const uniqueFilials = computed(() => {
 
 const fetchFilials = async () => {
 	try {
-		const response = await axios.get('https://api.erkaboyev.uz/Golddishes_test/hs/loyalty/subsection?chatID='+chatID, {
+		const response = await axios.get('https://api.erkaboyev.uz/Golddishes/hs/loyalty/subsection?chatID='+chatID, {
 			headers: {
 				Authorization: 'Basic ' + btoa('admin:57325732'),
 				'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ const fetchAllFeedbacks = async (chatID) => {
 			return `${day}.${month}.${year}`;
 		};
 
-		const response = await axios.get('https://api.erkaboyev.uz/Golddishes_test/hs/loyalty/feedback', {
+		const response = await axios.get('https://api.erkaboyev.uz/Golddishes/hs/loyalty/feedback', {
 			params: {
 				chatID: chatID,
 				type: selectedFilial.value ? 'allByFilialCode' : 'all',
