@@ -36,6 +36,11 @@ const routes = [
     name: 'ProfileEdit', 
     component: () => import('@/views/ProfileEdit.vue') 
   },
+  { 
+    path: '/feedbacks', 
+    name: 'Feedbacks', 
+    component: () => import('@/views/feedbacksView.vue') 
+  }
 ]
 
 
