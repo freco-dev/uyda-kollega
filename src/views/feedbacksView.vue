@@ -3,7 +3,7 @@
 		<h1 class="title">Fikr-mulohazalar</h1>
         <hr>
 
-		<div class="filter-header">
+		<div class="filter-header ">
 			<button class="collapse-btn" @click="showFilters = !showFilters">
 				<span class="icon">{{ showFilters ? '▼' : '▶' }}</span>
 				Filtirlar
@@ -80,7 +80,7 @@ const dateFrom = ref('');
 const dateTo = ref('');
 const showFilters = ref(false);
 const filials = ref([]);
-const chatID = '1319223069';
+const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
 const uniqueFilials = computed(() => {
 	return filials.value;
@@ -115,7 +115,8 @@ const fetchAllFeedbacks = async (chatID) => {
 		const response = await axios.get('https://api.erkaboyev.uz/Golddishes_test/hs/loyalty/feedback', {
 			params: {
 				chatID: chatID,
-				type: selectedFilial.value || 'all',
+				type: selectedFilial.value ? 'allByFilialCode' : 'all',
+				filialCode: selectedFilial.value || '',
 				dateTo: formatDateForAPI(dateTo.value),
 				dateFrom: formatDateForAPI(dateFrom.value),
 			},
