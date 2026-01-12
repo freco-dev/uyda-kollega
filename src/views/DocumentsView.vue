@@ -51,6 +51,7 @@
       padding: 5px 0 5px 0;
       "><i class="bi bi-file-earmark-plus m-2"></i></RouterLink>
     </div>
+    <BottomBar />
   </div>
 </template>
 
@@ -59,6 +60,7 @@ import apiLink from "@/config/api";
 import axios from "axios";
 import { ref, onMounted } from "vue";
 import { RouterLink, useRouter } from "vue-router";
+import BottomBar from '@/components/BottomBar.vue';
 import { useI18n } from "vue-i18n";
 
 const formatNumber = (value) => {
@@ -68,6 +70,7 @@ const formatNumber = (value) => {
 
 export default {
   name: "DocumentsView",
+  components: { BottomBar },
   setup() {
     const { t } = useI18n();
     const router = useRouter();

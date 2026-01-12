@@ -3,11 +3,48 @@
 		<h1 class="title">Fikr-mulohazalar</h1>
         <hr>
 
+		<div class="filter-header">
+			<button class="collapse-btn" @click="showFilters = !showFilters">
+				<span class="icon">{{ showFilters ? '▼' : '▶' }}</span>
+				Filtirlar
+			</button>
+		</div>
+
+		<div v-show="showFilters" class="filters">
+			<div class="filter-group">
+				<label for="filial-select">Filial:</label>
+				<select id="filial-select" v-model="selectedFilial">
+					<option value="">Barchasi</option>
+					<option v-for="filial in uniqueFilials" :key="filial.code" :value="filial.code">
+						{{ filial.name }}
+					</option>
+				</select>
+			</div>
+
+			<div class="filter-group">
+				<label for="date-from">Sanasi (dan):</label>
+				<input id="date-from" type="date" v-model="dateFrom">
+			</div>
+
+			<div class="filter-group">
+				<label for="date-to">Sanasi (gacha):</label>
+				<input id="date-to" type="date" v-model="dateTo">
+			</div>
+
+			<button class="apply-btn" @click="applyFilters">
+				Qoʻllash
+			</button>
+
+			<button class="reset-btn" @click="resetFilters">
+				Reset
+			</button>
+		</div>
+
 		<div class="feedback-list">
             <h4></h4>
 			<div v-for="item in feedbacks" :key="item.id" class="feedback-card">
 				<div class="left">
-					<div class="avatar" :title="item.clientName || item.filial">{{ getInitials(item) }}</div>
+					<div class="avatar" :title="item.clientName || item.filial?.name">{{ getInitials(item) }}</div>
 					<div class="rating">
 						<template v-for="n in 5" :key="n">
 							<i :class="['star', n <= item.rating ? 'filled' : '']">&#9733;</i>
@@ -18,66 +55,151 @@
 
 				<div class="content">
 					<div class="header">
-						<div class="recipient">Qabul qiluvchi: <strong>{{ item.recipientCode }}</strong></div>
-						<div class="client">Mijoz: <strong>{{ item.clientName }}</strong></div>
-						<div class="filial">{{ item.filial }}</div>
+						<div class="client"><strong>{{ item.clientName }}</strong><span v-if="item.client?.name"> ({{ item.client.name }})</span></div>
+						<div class="recipient">Recpient Code <strong>{{ item.recipientCode }}</strong></div>
+						<div class="filial">{{ item.filial?.name || '' }}</div>
 					</div>
 					<p class="text">{{ item.text }}</p>
 				</div>
 			</div>
 			<div v-if="feedbacks.length === 0" class="empty">Hozircha fikr-mulohaza yo'q.</div>
 		</div>
+		<BottomBar />
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import BottomBar from '@/components/BottomBar.vue';
+import axios from 'axios';
 
-const feedbacks = ref([
-	{
-		id: 1,
-		rating: 5,
-		clientName: 'Ali Ahmedov',
-		text: "Xodim juda yordamchi va professional, muammo tezkor hal qilindi.",
-		recipientCode: 'EMP-001',
-		filial: 'Toshkent',
-		date: '2026-01-08T10:24:00Z'
-	},
-	{
-		id: 2,
-		rating: 4,
-		clientName: 'Nilufar Saidova',
-		text: 'Yaxshi xizmat, biroz kechikish bor edi.',
-		recipientCode: 'EMP-045',
-		filial: 'Samarqand',
-		date: '2026-01-05T14:10:00Z'
-	},
-	{
-		id: 3,
-		rating: 3,
-		clientName: 'Bekzod Iskandarov',
-		text: 'Odatdagi xizmat, takliflarimni eshitishdi.',
-		recipientCode: 'EMP-023',
-		filial: 'Farg‘ona',
-		date: '2025-12-28T08:00:00Z'
-	}
-]);
+const feedbacks = ref([]);
+const allFeedbacks = ref([]);
+const selectedFilial = ref('');
+const dateFrom = ref('');
+const dateTo = ref('');
+const showFilters = ref(false);
+const filials = ref([]);
+const chatID = '1319223069';
 
-function formatDate(iso) {
+const uniqueFilials = computed(() => {
+	return filials.value;
+});
+
+const fetchFilials = async () => {
 	try {
-		const d = new Date(iso);
-		return d.toLocaleString();
+		const response = await axios.get('https://api.erkaboyev.uz/Golddishes_test/hs/loyalty/subsection?chatID='+chatID, {
+			headers: {
+				Authorization: 'Basic ' + btoa('admin:57325732'),
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true'
+			}
+		});
+		filials.value = response.data?.data || [];
+		console.log('Fetched filials:', filials.value);
+	} catch (err) {
+		console.error('fetchFilials error', err);
+		filials.value = [];
+	}
+};
+
+const fetchAllFeedbacks = async (chatID) => {
+	try {
+		// Convert dates from yyyy-mm-dd to dd.mm.yyyy format
+		const formatDateForAPI = (date) => {
+			if (!date) return '';
+			const [year, month, day] = date.split('-');
+			return `${day}.${month}.${year}`;
+		};
+
+		const response = await axios.get('https://api.erkaboyev.uz/Golddishes_test/hs/loyalty/feedback', {
+			params: {
+				chatID: chatID,
+				type: selectedFilial.value || 'all',
+				dateTo: formatDateForAPI(dateTo.value),
+				dateFrom: formatDateForAPI(dateFrom.value),
+			},
+			headers: {
+				Authorization: 'Basic ' + btoa('admin:57325732'),
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true'
+			}
+		});
+		return response.data?.data || [];
+	} catch (err) {
+		console.error('fetchAllFeedbacks error', err);
+		return [];
+	}
+};
+
+const applyFilters = async () => {
+	feedbacks.value = [];
+	
+	feedbacks.value = await fetchAllFeedbacks(chatID);
+};
+
+const resetFilters = async () => {
+	selectedFilial.value = '';
+	dateFrom.value = '';
+	dateTo.value = '';
+	feedbacks.value = await fetchAllFeedbacks(chatID);
+};
+
+function convertToDate(dateString) {
+	// Handle 'dd.mm.yyyy hh:mm' format
+	const match = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4})\s(\d{2}):(\d{2})$/);
+	if (match) {
+		const [, day, month, year, hours, minutes] = match;
+		return new Date(`${year}-${month}-${day}T${hours}:${minutes}`);
+	}
+	return new Date(dateString);
+}
+
+onMounted(async () => {
+	// const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '1319223069';
+	await fetchFilials();
+	feedbacks.value = await fetchAllFeedbacks("1319223069");
+	console.log('Fetched feedbacks:', feedbacks.value);
+});
+
+function formatDate(dateString) {
+	try {
+		// Handle 'dd.mm.yyyy hh:mm' format
+		const match = dateString.match(/^(\d{2})\.(\d{2})\.(\d{4})\s(\d{2}):(\d{2})$/);
+		if (match) {
+			const [, day, month, year, hours, minutes] = match;
+			return `${day}.${month}.${year} ${hours}:${minutes}`;
+		}
+		// Fallback for other formats
+		const d = new Date(dateString);
+		if (!isNaN(d.getTime())) {
+			return d.toLocaleString();
+		}
+		return dateString;
 	} catch (e) {
-		return iso;
+		return dateString;
 	}
 }
 
 function getInitials(item) {
-	const source = item.clientName || item.filial || item.recipientCode || '';
+	let source = item.clientName || '';
+	if (!source && item.filial?.name) {
+		source = item.filial.name;
+	}
+	if (!source) {
+		source = item.recipientCode || '';
+	}
 	const parts = source.split(/\s+/).filter(Boolean);
 	if (parts.length === 0) return 'UK';
-	if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+	if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
 	return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
+</script>
+
+<script>
+export default {
+	components: { BottomBar }
 }
 </script>
 
@@ -90,6 +212,125 @@ function getInitials(item) {
 }
 .feedbacks-page { padding: 20px; background: var(--bg); min-height: 100vh; }
 .title { font-size: 22px; margin-bottom: 16px; color: #111827; }
+.filter-header {
+	margin-bottom: 12px;
+}
+.collapse-btn {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	background: var(--card);
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	padding: 10px 14px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #374151;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+.collapse-btn:hover {
+	background: #f9fafb;
+	border-color: #9ca3af;
+}
+.collapse-btn:active {
+	transform: scale(0.98);
+}
+.collapse-btn .icon {
+	font-size: 12px;
+	transition: transform 0.2s ease;
+}
+.filters {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 20px;
+	flex-wrap: wrap;
+	background: var(--card);
+	padding: 14px;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(16,24,40,0.06);
+	animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.filter-group label {
+	font-size: 12px;
+	font-weight: 600;
+	color: #374151;
+}
+.filter-group select,
+.filter-group input {
+	padding: 8px 12px;
+	border: 1px solid #d1d5db;
+	border-radius: 8px;
+	font-size: 13px;
+	background: white;
+	cursor: pointer;
+	min-width: 140px;
+}
+.filter-group select:hover,
+.filter-group input:hover {
+	border-color: #9ca3af;
+}
+.filter-group select:focus,
+.filter-group input:focus {
+	outline: none;
+	border-color: #667eea;
+	box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+.apply-btn {
+	align-self: flex-end;
+	padding: 8px 16px;
+	background: #10b981;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+.apply-btn:hover {
+	background: #059669;
+	box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+.apply-btn:active {
+	transform: scale(0.98);
+}
+.reset-btn {
+	align-self: flex-end;
+	padding: 8px 16px;
+	background: #ef4444;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+.reset-btn:hover {
+	background: #dc2626;
+	box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+.reset-btn:active {
+	transform: scale(0.98);
+}
 .feedback-list { display: flex; flex-direction: column; gap: 14px; }
 .feedback-card {
 	display: flex; gap: 14px; align-items: flex-start; background: var(--card);
@@ -115,6 +356,28 @@ function getInitials(item) {
 .empty { text-align:center; color:var(--muted); padding:24px; }
 
 @media (max-width: 640px) {
+	.filters {
+		flex-direction: column;
+		gap: 10px;
+	}
+	.filter-group {
+		flex-direction: row;
+		align-items: center;
+		gap: 8px;
+	}
+	.filter-group label {
+		min-width: 80px;
+	}
+	.filter-group select,
+	.filter-group input {
+		min-width: 0;
+		flex: 1;
+	}
+	.apply-btn,
+	.reset-btn {
+		align-self: flex-start;
+		width: 100%;
+	}
 	.feedback-list { gap: 12px; }
 	.feedback-card { flex-direction: column; gap: 10px; padding:12px; }
 	.left { width:100%; display:flex; align-items:center; gap:12px; }

@@ -360,7 +360,7 @@ export default {
       }
 
       try {
-    const response = await axios.get(`${apiLink}/user?chatId=${Telegram.WebApp.initDataUnsafe.user}`, {
+    const response = await axios.get(`${apiLink}/user?chatId=${Telegram.WebApp.initDataUnsafe.user.id}`, {
       headers: {
         "Authorization": "Basic " + btoa("admin:57325732"),
         "Content-Type": "application/json",
