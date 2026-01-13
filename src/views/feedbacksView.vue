@@ -48,7 +48,6 @@
 					>
 						&#9733;
 					</button>
-					<span v-if="selectedRating > 0" class="rating-text">{{ selectedRating }} yulduz</span>
 				</div>
 			</div>
 
