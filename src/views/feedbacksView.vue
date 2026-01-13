@@ -36,12 +36,29 @@
 				<input id="date-to" type="date" v-model="dateTo">
 			</div>
 
+			<div class="filter-group">
+				<label>Rating:</label>
+				<div class="stars-filter">
+					<button 
+						v-for="n in 5" 
+						:key="n"
+						class="star-btn"
+						:class="{ active: selectedRating === n }"
+						@click="selectedRating === n ? selectedRating = 0 : selectedRating = n"
+					>
+						&#9733;
+					</button>
+					<span v-if="selectedRating > 0" class="rating-text">{{ selectedRating }} yulduz</span>
+					<span v-else class="rating-text">Tanlang</span>
+				</div>
+			</div>
+
 			<button class="apply-btn" @click="applyFilters">
 				Qoʻllash
 			</button>
 
 			<button class="reset-btn" @click="resetFilters">
-				Reset
+				Tozalash
 			</button>
 		</div>
 
@@ -49,7 +66,7 @@
             <h4></h4>
 			<div v-for="item in feedbacks" :key="item.id" class="feedback-card">
 				<div class="left">
-					<div class="avatar" :title="item.clientName || item.filial?.name">{{ getInitials(item) }}</div>
+					<div class="avatar" :title="item.client?.name || item.clientName">{{ getInitials(item) }}</div>
 					<div class="rating">
 						<template v-for="n in 5" :key="n">
 							<i :class="['star', n <= item.rating ? 'filled' : '']">&#9733;</i>
@@ -60,8 +77,8 @@
 
 				<div class="content">
 					<div class="header">
-						<div class="client"><strong>{{ item.client.name }}</strong><span v-if="item.client?.name" class="client-chat-link" @click="searchByClientChatID(item.client.chatID)"> ({{ item.client.name }})</span></div>
-						<div class="recipient">Recpient Code <strong>{{ item.recipientCode }}</strong></div>
+						<div class="client"><strong class="client-chat-link" @click="searchByClientChatID(item.client.chatID)"></strong>>{{ item.client.name }}</div>
+						<div class="recipient">Chek raqami:  <strong>{{ item.recipientCode }}</strong></div>
 						<div class="filial">{{ item.filial?.name || '' }}</div>
 					</div>
 					<p class="text">{{ item.text }}</p>
@@ -69,6 +86,7 @@
 			</div>
 			<div v-if="feedbacks.length === 0" class="empty">Hozircha fikr-mulohaza yo'q.</div>
 		</div>
+		<div class="__space"></div>
 		<BottomBar />
 	</div>
 </template>
@@ -84,6 +102,7 @@ const selectedFilial = ref('');
 const clientChatID = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
+const selectedRating = ref(0);
 const showFilters = ref(false);
 const filials = ref([]);
 const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
@@ -118,15 +137,20 @@ const fetchAllFeedbacks = async (chatID) => {
 			return `${day}.${month}.${year}`;
 		};
 
+		const params = {
+			chatID: chatID,
+			filialCode: selectedFilial.value || '',
+			clientChatID: clientChatID.value || '',
+			dateTo: formatDateForAPI(dateTo.value),
+			dateFrom: formatDateForAPI(dateFrom.value),
+		};
+		
+		if (selectedRating.value > 0) {
+			params.rating = selectedRating.value;
+		}
+
 		const response = await axios.get('https://api.erkaboyev.uz/Golddishes/hs/loyalty/feedback', {
-			params: {
-				chatID: chatID,
-				type: selectedFilial.value || clientChatID.value ? 'allByFilialCode' : 'all',
-				filialCode: selectedFilial.value || '',
-				clientChatID: clientChatID.value || '',
-				dateTo: formatDateForAPI(dateTo.value),
-				dateFrom: formatDateForAPI(dateFrom.value),
-			},
+			params: params,
 			headers: {
 				Authorization: 'Basic ' + btoa('admin:57325732'),
 				'Content-Type': 'application/json',
@@ -151,6 +175,7 @@ const resetFilters = async () => {
 	clientChatID.value = '';
 	dateFrom.value = '';
 	dateTo.value = '';
+	selectedRating.value = 0;
 	feedbacks.value = await fetchAllFeedbacks(chatID);
 };
 
@@ -174,7 +199,7 @@ function convertToDate(dateString) {
 onMounted(async () => {
 	// const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '1319223069';
 	await fetchFilials();
-	feedbacks.value = await fetchAllFeedbacks("1319223069");
+	feedbacks.value = await fetchAllFeedbacks(chatID.value);
 	console.log('Fetched feedbacks:', feedbacks.value);
 });
 
@@ -198,10 +223,7 @@ function formatDate(dateString) {
 }
 
 function getInitials(item) {
-	let source = item.clientName || '';
-	if (!source && item.filial?.name) {
-		source = item.filial.name;
-	}
+	let source = item.client?.name || item.clientName || '';
 	if (!source) {
 		source = item.recipientCode || '';
 	}
@@ -255,6 +277,10 @@ export default {
 .collapse-btn .icon {
 	font-size: 12px;
 	transition: transform 0.2s ease;
+}
+.__space {
+	flex: 1;
+	min-height: 60px;
 }
 .filters {
 	display: flex;
@@ -346,6 +372,33 @@ export default {
 }
 .reset-btn:active {
 	transform: scale(0.98);
+}
+.stars-filter {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.star-btn {
+	background: none;
+	border: none;
+	font-size: 24px;
+	color: #e6e6e6;
+	cursor: pointer;
+	padding: 4px;
+	transition: all 0.2s ease;
+}
+.star-btn:hover {
+	color: #f5a623;
+	transform: scale(1.1);
+}
+.star-btn.active {
+	color: #f5a623;
+	text-shadow: 0 1px 0 rgba(0,0,0,0.04);
+}
+.rating-text {
+	font-size: 12px;
+	color: #6b7280;
+	font-weight: 600;
 }
 .feedback-list { display: flex; flex-direction: column; gap: 14px; }
 .feedback-card {
