@@ -12,6 +12,11 @@
 
 		<div v-show="showFilters" class="filters">
 			<div class="filter-group">
+				<label for="client-chat-id">Client Chat ID:</label>
+				<input id="client-chat-id" type="text" v-model="clientChatID" placeholder="Kiritish...">
+			</div>
+
+			<div class="filter-group">
 				<label for="filial-select">Filial:</label>
 				<select id="filial-select" v-model="selectedFilial">
 					<option value="">Barchasi</option>
@@ -55,7 +60,7 @@
 
 				<div class="content">
 					<div class="header">
-						<div class="client"><strong>{{ item.clientName }}</strong><span v-if="item.client?.name"> ({{ item.client.name }})</span></div>
+						<div class="client"><strong>{{ item.client.name }}</strong><span v-if="item.client?.name" class="client-chat-link" @click="searchByClientChatID(item.client.chatID)"> ({{ item.client.name }})</span></div>
 						<div class="recipient">Recpient Code <strong>{{ item.recipientCode }}</strong></div>
 						<div class="filial">{{ item.filial?.name || '' }}</div>
 					</div>
@@ -76,6 +81,7 @@ import axios from 'axios';
 const feedbacks = ref([]);
 const allFeedbacks = ref([]);
 const selectedFilial = ref('');
+const clientChatID = ref('');
 const dateFrom = ref('');
 const dateTo = ref('');
 const showFilters = ref(false);
@@ -115,8 +121,9 @@ const fetchAllFeedbacks = async (chatID) => {
 		const response = await axios.get('https://api.erkaboyev.uz/Golddishes/hs/loyalty/feedback', {
 			params: {
 				chatID: chatID,
-				type: selectedFilial.value ? 'allByFilialCode' : 'all',
+				type: selectedFilial.value || clientChatID.value ? 'allByFilialCode' : 'all',
 				filialCode: selectedFilial.value || '',
+				clientChatID: clientChatID.value || '',
 				dateTo: formatDateForAPI(dateTo.value),
 				dateFrom: formatDateForAPI(dateFrom.value),
 			},
@@ -141,8 +148,16 @@ const applyFilters = async () => {
 
 const resetFilters = async () => {
 	selectedFilial.value = '';
+	clientChatID.value = '';
 	dateFrom.value = '';
 	dateTo.value = '';
+	feedbacks.value = await fetchAllFeedbacks(chatID);
+};
+
+const searchByClientChatID = async (chatId) => {
+	clientChatID.value = chatId;
+	showFilters.value = true;
+	feedbacks.value = [];
 	feedbacks.value = await fetchAllFeedbacks(chatID);
 };
 
@@ -352,6 +367,15 @@ export default {
 .content { flex:1; }
 .header { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:8px; }
 .recipient { font-size:13px; color:#111827; }
+.client-chat-link {
+	cursor: pointer;
+	color: #667eea;
+	transition: all 0.2s ease;
+}
+.client-chat-link:hover {
+	color: #764ba2;
+	text-decoration: underline;
+}
 .filial { font-size:12px; color:var(--muted); background:#f3f4f6; padding:6px 8px; border-radius:8px; }
 .text { margin:0; color:#374151; line-height:1.45; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
 .empty { text-align:center; color:var(--muted); padding:24px; }
