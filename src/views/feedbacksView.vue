@@ -60,7 +60,12 @@
 			</button>
 		</div>
 
-		<div class="feedback-list">
+		<div v-if="isLoading" class="loader-container">
+			<div class="loader"></div>
+			<p>Yuklanmoqda...</p>
+		</div>
+
+		<div v-else class="feedback-list">
             <h4></h4>
 			<div v-for="item in feedbacks" :key="item.id" class="feedback-card">
 				<div class="left">
@@ -102,6 +107,7 @@ const dateFrom = ref('');
 const dateTo = ref('');
 const selectedRating = ref(0);
 const showFilters = ref(false);
+const isLoading = ref(false);
 const filials = ref([]);
 const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
@@ -163,25 +169,31 @@ const fetchAllFeedbacks = async (chatID) => {
 };
 
 const applyFilters = async () => {
+	isLoading.value = true;
 	feedbacks.value = [];
 	
 	feedbacks.value = await fetchAllFeedbacks(chatID);
+	isLoading.value = false;
 };
 
 const resetFilters = async () => {
+	isLoading.value = true;
 	selectedFilial.value = '';
 	clientChatID.value = '';
 	dateFrom.value = '';
 	dateTo.value = '';
 	selectedRating.value = 0;
 	feedbacks.value = await fetchAllFeedbacks(chatID);
+	isLoading.value = false;
 };
 
 const searchByClientChatID = async (chatId) => {
+	isLoading.value = true;
 	clientChatID.value = chatId;
 	showFilters.value = true;
 	feedbacks.value = [];
 	feedbacks.value = await fetchAllFeedbacks(chatID);
+	isLoading.value = false;
 };
 
 function convertToDate(dateString) {
@@ -196,8 +208,10 @@ function convertToDate(dateString) {
 
 onMounted(async () => {
 	// const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '1319223069';
+	isLoading.value = true;
 	await fetchFilials();
-	feedbacks.value = await fetchAllFeedbacks(chatID.value);
+	feedbacks.value = await fetchAllFeedbacks("1319223069");
+	isLoading.value = false;
 	console.log('Fetched feedbacks:', feedbacks.value);
 });
 
@@ -396,6 +410,31 @@ export default {
 .rating-text {
 	font-size: 12px;
 	color: #6b7280;
+	font-weight: 600;
+}
+.loader-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	gap: 20px;
+}
+.loader {
+	border: 4px solid #f3f4f6;
+	border-top: 4px solid #667eea;
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+	animation: spin 1s linear infinite;
+}
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+.loader-container p {
+	color: #6b7280;
+	font-size: 14px;
 	font-weight: 600;
 }
 .feedback-list { display: flex; flex-direction: column; gap: 14px; }
