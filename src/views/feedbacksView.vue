@@ -210,7 +210,8 @@ onMounted(async () => {
 	// const chatID = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || '1319223069';
 	isLoading.value = true;
 	await fetchFilials();
-	feedbacks.value = await fetchAllFeedbacks(chatID);
+	feedbacks.value = await applyFilters()
+	allFeedbacks.value = feedbacks.value;
 	isLoading.value = false;
 	console.log('Fetched feedbacks:', feedbacks.value);
 });
