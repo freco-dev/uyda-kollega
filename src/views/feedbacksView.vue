@@ -43,13 +43,12 @@
 						v-for="n in 5" 
 						:key="n"
 						class="star-btn"
-						:class="{ active: selectedRating === n }"
+						:class="{ active: n <= selectedRating }"
 						@click="selectedRating === n ? selectedRating = 0 : selectedRating = n"
 					>
 						&#9733;
 					</button>
 					<span v-if="selectedRating > 0" class="rating-text">{{ selectedRating }} yulduz</span>
-					<span v-else class="rating-text">Tanlang</span>
 				</div>
 			</div>
 
@@ -77,7 +76,7 @@
 
 				<div class="content">
 					<div class="header">
-						<div class="client"><strong class="client-chat-link" @click="searchByClientChatID(item.client.chatID)"></strong>>{{ item.client.name }}</div>
+						<div class="client"><strong class="client-chat-link" @click="searchByClientChatID(item.client.chatID)">{{ item.client.name }}</strong></div>
 						<div class="recipient">Chek raqami:  <strong>{{ item.recipientCode }}</strong></div>
 						<div class="filial">{{ item.filial?.name || '' }}</div>
 					</div>
