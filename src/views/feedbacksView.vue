@@ -211,7 +211,6 @@ onMounted(async () => {
 	isLoading.value = true;
 	await fetchFilials();
 	feedbacks.value = await applyFilters()
-	allFeedbacks.value = feedbacks.value;
 	isLoading.value = false;
 	console.log('Fetched feedbacks:', feedbacks.value);
 });
